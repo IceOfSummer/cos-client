@@ -10,10 +10,11 @@
     "electron:serve": "vite build --mode electron & electron .",
     "preview": "vite preview"
   },
-  "main": "./src/main.ts",
+  "main": "main.js",
   "dependencies": {
     "pinia": "^2.0.32",
     "pinia-plugin-persistedstate": "^3.1.0",
+    "toastify-js": "^1.12.0",
     "vue": "^3.2.45",
     "vue-router": "4",
     "vuetify": "^3.1.6"
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@babel/core": "^7.12.16",
     "@babel/eslint-parser": "^7.19.1",
+    "@types/toastify-js": "^1.11.1",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "@vitejs/plugin-vue": "^4.0.0",

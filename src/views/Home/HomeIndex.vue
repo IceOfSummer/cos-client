@@ -9,7 +9,7 @@
         <v-tab to="/home/uploadHistory">上传历史</v-tab>
     </v-tabs>
   </v-card>
-  <router-view/>
+  <router-view class="container"/>
 </template>
 
 <script setup lang="ts">
@@ -20,5 +20,9 @@ const tab = ref()
 </script>
 
 <style scoped lang="scss">
-
+.container {
+  margin-top: 1rem;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
 </style>

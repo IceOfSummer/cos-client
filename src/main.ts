@@ -3,20 +3,18 @@ import './style.css'
 import App from './App.vue'
 import router from './router'
 import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import { VCard, VTab, VTabs } from 'vuetify/components'
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import 'material-design-icons-iconfont/dist/material-design-icons.css'
+import vuetify from './vuetify'
+import 'toastify-js/src/toastify.css'
 
-const vuetify = createVuetify({
-  components: {
-    'v-tabs': VTabs,
-    'v-card': VCard,
-    'v-tab': VTab
-  },
-  directives: []
-})
-
+const pinia = createPinia()
 const app = createApp(App)
 
+pinia.use(piniaPluginPersistedstate)
+
 app.use(vuetify)
+app.use(pinia)
 app.use(router)
 app.mount('#app')

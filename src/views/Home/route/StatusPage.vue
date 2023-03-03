@@ -1,6 +1,6 @@
 <template>
   <div>
-    <span>status page</span>
+    <v-card text="该功能正在开发中..." variant="tonal"/>
   </div>
 </template>
 
