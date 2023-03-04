@@ -2,6 +2,8 @@
   "name": "cos-client",
   "version": "0.0.1",
   "private": true,
+  "author": "IceOfSummer",
+  "description": "对象存储上传工具",
   "scripts": {
     "build": "vue-tsc && vite build",
     "lint": "vue-cli-service lint",
