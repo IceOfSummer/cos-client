@@ -14,17 +14,17 @@
             <div>
               <v-select
                 :items="cosProviderList"
-                :error-messages="form.cosProvider.$errors.map(e => e.$message)"
+                :error-messages="form.cosProvider.$errors.map(errorsToStringArray)"
                 item-title="alias"
                 item-value="name"
                 v-model="formValue.cosProvider"
                 label="服务商"
               />
-              <v-text-field label="存储桶名称" v-model="formValue.cosName" :error-messages="form.cosName.$errors.map(e => e.$message)"/>
-              <v-text-field label="存储桶访问域名" v-model="formValue.accessUrl" :error-messages="form.accessUrl.$errors.map(e => e.$message)"/>
-              <v-text-field label="SecretId" v-model="formValue.secretId" :error-messages="form.secretId.$errors.map(e => e.$message)"/>
-              <v-text-field label="SecretKey" v-model="formValue.secretKey" :error-messages="form.secretKey.$errors.map(e => e.$message)"/>
-              <v-text-field label="存储桶别称(可选)"  v-model="formValue.cosAlias" :error-messages="form.cosAlias?.$errors.map(e => e.$message)"/>
+              <v-text-field label="存储桶名称" v-model="formValue.cosName" :error-messages="form.cosName.$errors.map(errorsToStringArray)"/>
+              <v-text-field label="存储桶访问域名" v-model="formValue.accessUrl" :error-messages="form.accessUrl.$errors.map(errorsToStringArray)"/>
+              <v-text-field label="SecretId" v-model="formValue.secretId" :error-messages="form.secretId.$errors.map(errorsToStringArray)"/>
+              <v-text-field label="SecretKey" v-model="formValue.secretKey" :error-messages="form.secretKey.$errors.map(errorsToStringArray)"/>
+              <v-text-field label="存储桶别称(可选)"  v-model="formValue.cosAlias"/>
             </div>
           </v-lazy>
         </v-card-text>
@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, Ref } from 'vue'
 import useTokenStore from '../store/tokenStore'
 import { showToast } from '../utils/Toast'
 import { CosProvider } from '../api/cos/types'
@@ -60,6 +60,17 @@ import { required } from '../utils/validators'
 
 interface Props {
   modelValue: boolean
+}
+
+type ErrorLike = {
+  '$message': string | Ref<string>
+}
+
+const errorsToStringArray = ({ $message }: ErrorLike) => {
+  if (typeof $message === 'string') {
+    return $message
+  }
+  return $message.value
 }
 
 const props = defineProps<Props>()
@@ -96,7 +107,7 @@ const form = useVuelidate<FromValue, ValidationArgs<FromValue>>({
   accessUrl: { required },
   secretKey: { required },
   secretId: { required },
-  cosProvider: { required }
+  cosProvider: { required },
 }, formValue)
 
 const tokenStore = useTokenStore()
