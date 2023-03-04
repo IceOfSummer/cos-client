@@ -1,8 +1,8 @@
 // 控制应用生命周期和创建原生浏览器窗口的模组
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
 
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true; // 关闭控制台的警告
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true // 关闭控制台的警告
 
 function createWindow () {
   // 创建浏览器窗口
@@ -14,15 +14,16 @@ function createWindow () {
       nodeIntegration: true, //开启true这一步很重要,目的是为了vue文件中可以引入node和electron相关的API
       contextIsolation: false, // 可以使用require方法
       enableRemoteModule: true, // 可以使用remote方法
-    }
+    },
   })
 
   // 加载 index.html
   mainWindow.loadFile(path.resolve(__dirname, './dist/index.html')) // 新增
+  Menu.setApplicationMenu(null)
 
-
-  // 打开开发工具
-  mainWindow.webContents.openDevTools()
+  ipcMain.on('open-devtools', () => {
+    mainWindow.openDevTools()
+  })
 }
 
 // 这段程序将会在 Electron 结束初始化

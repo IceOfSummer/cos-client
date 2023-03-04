@@ -10,4 +10,15 @@
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
+  <script>
+    window.addEventListener('keydown',e => {
+      const { altKey, ctrlKey, keyCode } = e;
+      <!--alt + ctrl + d -->
+      if(altKey && ctrlKey  && keyCode === 68){
+        const { ipcRenderer } = require('electron')
+        ipcRenderer.send('open-devtools')
+        e.preventDefault();
+      }
+    },false);
+  </script>
 </html>
