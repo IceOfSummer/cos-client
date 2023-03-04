@@ -6,8 +6,8 @@ import {
   VCardTitle, VCheckbox, VCheckboxBtn, VCol, VContainer,
   VDialog,
   VDivider,
-  VFileInput, VForm, VLazy,
-  VListItem, VRow,
+  VFileInput, VForm, VLayout, VLazy,
+  VListItem, VNavigationDrawer, VProgressLinear, VRow,
   VSelect, VSpacer,
   VTab,
   VTabs, VTextField
@@ -37,7 +37,10 @@ const vuetify = createVuetify({
     'v-form': VForm,
     'v-alert': VAlert,
     'v-checkbox': VCheckbox,
-    'v-checkbox-btn': VCheckboxBtn
+    'v-checkbox-btn': VCheckboxBtn,
+    'v-navigation-drawer': VNavigationDrawer,
+    'v-layout': VLayout,
+    'v-progress-linear': VProgressLinear
   },
   directives: [],
   icons: {

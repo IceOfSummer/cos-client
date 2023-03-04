@@ -3,7 +3,7 @@ import Toastify from 'toastify-js'
 type ToastType = 'primary' | 'error'
 
 
-export const showToast = (text: string, type?: ToastType) => {
+function generateConfig(text: string, type?: ToastType):Toastify.Options {
   let toastConfig:Toastify.Options
   switch (type) {
     case undefined:
@@ -24,9 +24,21 @@ export const showToast = (text: string, type?: ToastType) => {
       break
     default:
       console.error('unknown toast type: ' + type)
-      return
+      return { text, duration: 3000 }
   }
-  const toast = Toastify(toastConfig)
+  return toastConfig
+}
+
+export const showToast = (text: string, type?: ToastType) => {
+  const toast = Toastify(generateConfig(text, type))
+  toast.showToast()
+  return toast
+}
+
+export const showToastFromBottom = (text: string, type?: ToastType) => {
+  const config = generateConfig(text, type)
+  config.position = 'center'
+  const toast = Toastify(config)
   toast.showToast()
   return toast
 }

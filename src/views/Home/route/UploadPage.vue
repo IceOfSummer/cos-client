@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-file-input label="添加图片/文件" @update:model-value="onModelValueUpdate"></v-file-input>
+    <v-file-input label="添加图片/文件" v-model="selectedFile"></v-file-input>
     <div class="bottom-control-container">
       <v-select :items="tokens.map(value => value.bucketAlias)" label="选择存储桶" v-model="selectPick">
         <template v-slot:append-item>
@@ -19,7 +19,7 @@
         </template>
       </v-select>
       <v-text-field label="上传路径(文件名将使用随机UUID，请勿提供文件名，不填将上传至根目录)" style="flex: 1" v-model="uploadPath"/>
-      <v-btn :disabled="buttonDisable" block location="start" class="upload-button" @click="onSubmit">
+      <v-btn block location="start" class="upload-button" @click="onSubmit">
         <div>开始上传</div>
       </v-btn>
       <v-dialog v-model="deleteDialogVisible">
@@ -86,7 +86,7 @@ import { ref } from 'vue'
 import CosAddDialog from '../../../components/CosAddDialog.vue'
 import { storeToRefs } from 'pinia'
 import useTokenStore from '../../../store/tokenStore'
-import { showToast } from '../../../utils/Toast'
+import { showToast, showToastFromBottom } from '../../../utils/Toast'
 import CosFactory from '../../../api/cos'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -97,16 +97,11 @@ const currentSelectCosTitle = ref<string | undefined>()
 const { tokens } = storeToRefs(tokenStore)
 const addCosDialogVisible = ref(false)
 const selectPick = ref<string | undefined>(tokens.value[0]?.bucketAlias)
-const buttonDisable = ref < boolean > (true)
 const uploadPath = ref('')
 const uploadConfirmDialogVisible = ref(false)
 const uploadFilePath = ref('')
+const selectedFile = ref<File[]>([])
 
-let selectedFile: File
-const onModelValueUpdate = (files: File[]) => {
-  buttonDisable.value = !(files.length >= 0 && selectPick.value)
-  selectedFile = files[0]
-}
 
 const onSubmitButtonPress = () => {
   addCosDialogVisible.value = true
@@ -132,21 +127,28 @@ const confirmDelete = () => {
 }
 
 // 保存签名备份，以防上传失败
-let signatureBackup: string | undefined
-
+let randomFilename = ''
 const onSubmit = () => {
+  const file = selectedFile.value[0]
+  if (!file) {
+    showToast('请选择一个文件', 'error')
+    return
+  }
   const token = tokens.value.find(value => value.bucketAlias === selectPick.value)
   if (token) {
-    const fileExtensionIndex = selectedFile.name.lastIndexOf('.')
+    const fileExtensionIndex = file.name.lastIndexOf('.')
     if (fileExtensionIndex < 0) {
       showToast('文件名有误! 请确保该文件拥有拓展名')
       return
     }
     const now = new Date()
-    const upPath = `${now.getFullYear()}-${now.getMonth()}-${now.getDay()}-${uploadPath.value + uuidv4() + selectedFile.name.substring(fileExtensionIndex)}`
-    uploadFilePath.value = upPath
+    let pathPrefix = uploadPath.value
+    if (!pathPrefix.endsWith('/')) {
+      pathPrefix = pathPrefix + '/'
+    }
+    randomFilename = `${now.getFullYear()}-${now.getMonth()}-${now.getDay()}-${uuidv4() + selectedFile.value.name.substring(fileExtensionIndex)}`
+    uploadFilePath.value = pathPrefix + randomFilename
     uploadConfirmDialogVisible.value = true
-    console.log(upPath)
   } else {
     showToast('上传失败, 疑似您的存储桶设置有误', 'error')
   }
@@ -159,15 +161,17 @@ const confirmUpload = () => {
     return
   }
   const { cos, signer } = CosFactory(token.cosProvider)
-  if (!signatureBackup) {
-    signatureBackup = signer.signPutRequest(uploadFilePath.value, { secretId: token.secretId, secretKey: token.secretKey })
-  }
+  const sign = signer.signPutRequest(uploadFilePath.value, { secretId: token.secretId, secretKey: token.secretKey })
   cos.putObject({
-    file: selectedFile,
-    signature: signatureBackup,
+    file: selectedFile.value[0],
+    signature: sign,
     bucket: token.bucket,
     path: uploadFilePath.value,
+    uploadFilename: randomFilename
   })
+  selectedFile.value = []
+  uploadConfirmDialogVisible.value = false
+  showToastFromBottom('添加上传任务成功')
 }
 
 </script>

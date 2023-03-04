@@ -16,6 +16,7 @@
                 :items="cosProviderList"
                 :error-messages="form.cosProvider.$errors.map(e => e.$message)"
                 item-title="alias"
+                item-value="name"
                 v-model="formValue.cosProvider"
                 label="服务商"
               />

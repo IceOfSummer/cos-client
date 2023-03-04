@@ -7,6 +7,9 @@ export default class TencentCosSigner implements CosSigner {
 
 
   signPutRequest(path: string, secret: Secret): string {
+    if (path.charAt(0) !== '/') {
+      path = '/' + path
+    }
     return cosAuth({ Method: 'put', Pathname: path, SecretId: secret.secretId, SecretKey: secret.secretKey })
   }
 

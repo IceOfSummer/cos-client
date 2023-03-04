@@ -1,4 +1,4 @@
-
+import pubsub from 'pubsub-js'
 export type CosProvider = 'tencent'
 
 
@@ -6,21 +6,52 @@ export type PutObjectParam = {
   signature: string
   path: string
   file: File
-  progressCallback?: (current: number, total: number) => void
   /**
    * 存储桶地址
    */
   bucket: string
+  // 上传后的文件名称
+  uploadFilename: string
 }
 
-export interface CloudObjectStorage {
+export type Mission = {
+  // 上传后的文件名
+  filename: string
+  name: string
+  abortControl: InstanceType<typeof AbortController>
+  /**
+   * 进度上传, 该方法应该在上传时随时检查是否非空，若非空则应该直接调用
+   *
+   * 在创建任务时不要为该属性赋值，该属性会在外部进行赋值，类似于创建了一个回调
+   */
+  onProgress?: (current: number, total: number) => void
+  /**
+   * 同{@link Mission#onProgress}, 在上传结束时应检查非空并且调用
+   * @param response
+   */
+  onUploadDone?: (success: boolean, response: string) => void
+}
+
+export abstract class CloudObjectStorage {
+  public static readonly PUBSUB_MISSION_ADD = 'COS_PUBSUB_KEY:missionAdd'
+
+  public static readonly PUBSUB_MISSION_DONE = 'COS_PUBSUB_KEY:missionDone'
+
   /**
    * put object
    * @param param 请求参数
-   * @return {string} 请求的响应
    */
-  putObject(param: PutObjectParam): Promise<string>
+  abstract putObject(param: PutObjectParam): Promise<void>
+
+  protected pushMission(param: Mission) {
+    pubsub.publish(CloudObjectStorage.PUBSUB_MISSION_ADD, param)
+  }
+
+  protected notifyMissionDone() {
+    pubsub.publish(CloudObjectStorage.PUBSUB_MISSION_DONE)
+  }
 }
+
 
 export type Secret = {
   secretKey: string
