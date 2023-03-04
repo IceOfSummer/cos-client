@@ -1,3 +1,5 @@
+import pubsub from 'pubsub-js'
+
 export const TABLE_UPLOAD = Object.freeze({
   tableName: 'upload',
   primaryKey: 'path'
@@ -5,6 +7,9 @@ export const TABLE_UPLOAD = Object.freeze({
 
 
 export default class Database {
+
+  public static readonly PUBSUB_ON_DB_INIT_DONE = 'Database:onDatabaseInitDone'
+
   private static _INSTANCE: Database | undefined
 
   static get INSTANCE(): Database {
@@ -29,6 +34,7 @@ export default class Database {
       const objectStore = db.createObjectStore(TABLE_UPLOAD.tableName, { keyPath: TABLE_UPLOAD.primaryKey })
       objectStore.createIndex('pathIndex', TABLE_UPLOAD.primaryKey, { unique: false })
       this._connection = db
+      pubsub.publish(Database.PUBSUB_ON_DB_INIT_DONE)
       console.log('indexedDB init success')
     }
     database.onsuccess = (e) => {
@@ -36,6 +42,7 @@ export default class Database {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       this._connection = e.target.result
+      pubsub.publish(Database.PUBSUB_ON_DB_INIT_DONE)
       console.log('load indexedDB success')
     }
 

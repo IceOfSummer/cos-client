@@ -9,10 +9,11 @@ import {
   VFileInput, VForm, VLayout, VLazy,
   VListItem, VNavigationDrawer, VProgressLinear, VRow,
   VSelect, VSpacer,
-  VTab,
+  VTab, VTable,
   VTabs, VTextField
 } from 'vuetify/components'
 import { aliases, md } from 'vuetify/iconsets/md'
+import { VDataTable } from 'vuetify/labs/components'
 
 const vuetify = createVuetify({
   components: {
@@ -40,7 +41,9 @@ const vuetify = createVuetify({
     'v-checkbox-btn': VCheckboxBtn,
     'v-navigation-drawer': VNavigationDrawer,
     'v-layout': VLayout,
-    'v-progress-linear': VProgressLinear
+    'v-progress-linear': VProgressLinear,
+    'v-table': VTable,
+    'v-data-table': VDataTable
   },
   directives: [],
   icons: {

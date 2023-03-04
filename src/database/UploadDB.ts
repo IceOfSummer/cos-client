@@ -1,7 +1,7 @@
 import Database, { TABLE_UPLOAD } from './index'
 
-type UploadDBSchema = {
-  [TABLE_UPLOAD.primaryKey]: string
+export type UploadDBSchema = {
+  path: string
   remoteUrl: string
 }
 
@@ -82,6 +82,22 @@ export default class UploadDB {
         } else {
           resolve(data)
         }
+      }
+    })
+  }
+
+  public static getUploadedCount():Promise<number> {
+    return new Promise((resolve, reject) => {
+      const transaction = Database.INSTANCE.connection.transaction([TABLE_UPLOAD.tableName], 'readonly')
+      const objStore = transaction.objectStore(TABLE_UPLOAD.tableName)
+      const cntQuery = objStore.count()
+      cntQuery.onsuccess = evt => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        resolve(evt.target.result)
+      }
+      cntQuery.onerror = e => {
+        reject(e)
       }
     })
   }

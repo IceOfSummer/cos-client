@@ -85,7 +85,7 @@
 
 <script lang="ts" setup>
 
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import CosAddDialog from '../../../components/CosAddDialog.vue'
 import { storeToRefs } from 'pinia'
 import useTokenStore from '../../../store/tokenStore'
@@ -93,13 +93,7 @@ import { showToast, showToastFromBottom } from '../../../utils/Toast'
 import CosFactory from '../../../api/cos'
 import { v4 as uuidv4 } from 'uuid'
 import UploadDB from '../../../database/UploadDB'
-import Database from '../../../database'
 import { readFileUrl } from '../../../utils/FileUtils'
-
-onMounted(() => {
-  // 初始化
-  Database.INSTANCE
-})
 
 const tokenStore = useTokenStore()
 const deleteDialogVisible = ref(false)
