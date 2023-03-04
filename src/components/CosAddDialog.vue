@@ -12,12 +12,18 @@
         <v-card-text>
           <v-lazy :min-height="550">
             <div>
-              <v-text-field label="存储桶名称" :rules="commonRules" v-model="cosName"/>
-              <v-text-field label="存储桶别称(可选)"  v-model="cosAlias"/>
-              <v-text-field label="地域" :rules="commonRules" v-model="region"/>
-              <v-text-field label="存储桶访问地址" :rules="commonRules" v-model="accessUrl"/>
-              <v-text-field label="AccessKey" :rules="commonRules" v-model="accessKey"/>
-              <v-text-field label="AccessToken" :rules="commonRules" v-model="accessToken"/>
+              <v-select
+                :items="cosProviderList"
+                :error-messages="form.cosProvider.$errors.map(e => e.$message)"
+                item-title="alias"
+                v-model="formValue.cosProvider"
+                label="服务商"
+              />
+              <v-text-field label="存储桶名称" v-model="formValue.cosName" :error-messages="form.cosName.$errors.map(e => e.$message)"/>
+              <v-text-field label="存储桶访问域名" v-model="formValue.accessUrl" :error-messages="form.accessUrl.$errors.map(e => e.$message)"/>
+              <v-text-field label="SecretId" v-model="formValue.secretId" :error-messages="form.secretId.$errors.map(e => e.$message)"/>
+              <v-text-field label="SecretKey" v-model="formValue.secretKey" :error-messages="form.secretKey.$errors.map(e => e.$message)"/>
+              <v-text-field label="存储桶别称(可选)"  v-model="formValue.cosAlias" :error-messages="form.cosAlias?.$errors.map(e => e.$message)"/>
             </div>
           </v-lazy>
         </v-card-text>
@@ -43,82 +49,83 @@
   </v-dialog>
 </template>
 
-<script lang="ts">
-import { ref, computed,defineComponent } from 'vue'
+<script lang="ts" setup>
+import { computed, reactive } from 'vue'
 import useTokenStore from '../store/tokenStore'
-import Toastify from 'toastify-js'
 import { showToast } from '../utils/Toast'
+import { CosProvider } from '../api/cos/types'
+import { useVuelidate, ValidationArgs } from '@vuelidate/core'
+import { required } from '../utils/validators'
 
-const successToast = Toastify({
-  text: '添加成功!',
-  duration: 3000
+interface Props {
+  modelValue: boolean
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits(['update:modelValue'])
+
+type CosProviderItem = {
+  name: CosProvider
+  alias: string
+}
+
+// cos列表
+const cosProviderList: Array<CosProviderItem> = [{ name: 'tencent', alias: '腾讯云' }]
+
+type FromValue = {
+  cosName?: string,
+  cosAlias?: string,
+  accessUrl?: string,
+  secretKey?: string,
+  secretId?: string,
+  cosProvider?: CosProvider
+}
+
+const formValue = reactive<FromValue>({
+  cosName: '',
+  cosAlias: '',
+  accessUrl: '',
+  secretKey: '',
+  secretId: '',
+  cosProvider: undefined
 })
 
-export default defineComponent({
-  name: 'CosAddDialog',
-  props: {
-    modelValue: Boolean
-  },
-  setup(props, { emit }) {
-    const tokenStore = useTokenStore()
-    const visible = computed({
-      get: () => props.modelValue,
-      set: (value) => emit('update:modelValue', value)
-    })
-    const cosName = ref()
-    const cosAlias = ref()
-    const region = ref()
-    const accessUrl = ref()
-    const accessKey = ref()
-    const accessToken = ref()
+const form = useVuelidate<FromValue, ValidationArgs<FromValue>>({
+  cosName: { required },
+  accessUrl: { required },
+  secretKey: { required },
+  secretId: { required },
+  cosProvider: { required }
+}, formValue)
 
-    const commonRules = [
-      (value: string) => {
-        if (!value || value.trim().length === 0) {
-          return '该值不可为空'
-        }
-        return true
-      }
-    ]
+const tokenStore = useTokenStore()
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 
-    const openDrawer = () => {
-      visible.value = true
-    }
-
-    const onSubmit = (e: SubmitEvent) => {
-      try {
-        tokenStore.appendToken({
-          accessKey: accessKey.value,
-          accessToken: accessKey.value,
-          bucketAlias: cosAlias.value || cosName.value,
-          bucket: cosName.value,
-          region: region.value
-        })
-        successToast.showToast()
-        // 清空表单
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        e.target?.reset()
-        visible.value = false
-      } catch (e: any) {
-        showToast('保存失败: ' + e.message, 'error')
-      }
-    }
-
-    return {
-      visible,
-      openDrawer,
-      cosName,
-      cosAlias,
-      region,
-      accessUrl,
-      accessKey,
-      accessToken,
-      commonRules,
-      onSubmit
-    }
+const onSubmit = async () => {
+  const result = await form.value.$validate()
+  if (!result) {
+    return
   }
-})
+  const _formValue = formValue as Required<FromValue>
+  try {
+    tokenStore.appendToken({
+      secretKey: _formValue.secretKey,
+      secretId: _formValue.secretId,
+      bucketAlias: _formValue.cosAlias || _formValue.cosName,
+      bucket: _formValue.accessUrl,
+      cosProvider: _formValue.cosProvider
+    })
+    visible.value = false
+    showToast('添加成功')
+    // 清空表单
+    form.value.$reset()
+  } catch (e: any) {
+    showToast('保存失败: ' + e.message, 'error')
+  }
+}
 </script>
 
 <style scoped>

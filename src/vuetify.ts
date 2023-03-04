@@ -3,7 +3,7 @@ import {
   VAlert,
   VBtn,
   VCard, VCardActions, VCardText,
-  VCardTitle, VCol, VContainer,
+  VCardTitle, VCheckbox, VCheckboxBtn, VCol, VContainer,
   VDialog,
   VDivider,
   VFileInput, VForm, VLazy,
@@ -36,6 +36,8 @@ const vuetify = createVuetify({
     'v-spacer': VSpacer,
     'v-form': VForm,
     'v-alert': VAlert,
+    'v-checkbox': VCheckbox,
+    'v-checkbox-btn': VCheckboxBtn
   },
   directives: [],
   icons: {

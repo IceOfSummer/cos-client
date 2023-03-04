@@ -1,12 +1,18 @@
 import { defineStore } from 'pinia'
 import { deleteElement } from '../utils/Arrays'
+import { CosProvider } from '../api/cos/types'
 
 export interface Token {
+  cosProvider: CosProvider
+  secretId: string
+  secretKey: string
   bucketAlias: string
-  accessKey: string
-  accessToken: string
+  /**
+   * 存储桶地址，如:https://xxxx.xxx
+   *
+   * 末尾不要带'/'
+   */
   bucket: string
-  region: string
 }
 
 export type TokenStore = {
@@ -29,6 +35,9 @@ const useTokenStore = defineStore('token', {
      * @throws Error 当别名发生冲突时
      */
     appendToken(token: Token) {
+      if (!token.bucketAlias || token.bucketAlias.trim().length === 0) {
+        throw new Error('存储桶别称不能为空')
+      }
       if (this.tokens.findIndex(searchFn(token.bucketAlias)) >= 0) {
         throw new Error('该别名或存储桶名称已经存在')
       } else {
