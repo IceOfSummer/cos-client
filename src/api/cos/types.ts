@@ -1,4 +1,5 @@
 import pubsub from 'pubsub-js'
+import UploadDB from '../../database/UploadDB'
 export type CosProvider = 'tencent'
 
 
@@ -17,8 +18,11 @@ export type PutObjectParam = {
 export type Mission = {
   // 上传后的文件名
   filename: string
+  // 本地绝对路径
+  absolutePath: string
   name: string
   abortControl: InstanceType<typeof AbortController>
+  remoteUrl: string
   /**
    * 进度上传, 该方法应该在上传时随时检查是否非空，若非空则应该直接调用
    *
@@ -47,9 +51,16 @@ export abstract class CloudObjectStorage {
     pubsub.publish(CloudObjectStorage.PUBSUB_MISSION_ADD, param)
   }
 
-  protected notifyMissionDone() {
-    pubsub.publish(CloudObjectStorage.PUBSUB_MISSION_DONE)
+  protected notifyMissionDone(mission: Mission, success?: boolean) {
+    if (success) {
+      UploadDB.saveUploadRecord(mission.absolutePath, mission.remoteUrl).catch(e => {
+        console.error('保存上传记录失败', e, mission)
+      })
+    }
+    pubsub.publish(CloudObjectStorage.PUBSUB_MISSION_DONE, mission)
   }
+
+
 }
 
 

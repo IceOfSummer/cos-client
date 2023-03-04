@@ -17,7 +17,6 @@ const listener = PubSub.subscribe(CloudObjectStorage.PUBSUB_MISSION_ADD, (key, a
 })
 
 onUnmounted(() => {
-  console.log('un')
   PubSub.unsubscribe(listener)
 })
 

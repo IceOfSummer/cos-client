@@ -1,5 +1,6 @@
 import { CloudObjectStorage, Mission, PutObjectParam } from '../../types'
 import axios from 'axios'
+import { readFileUrl } from '../../../../utils/FileUtils'
 
 const appendUrl = (host: string, path: string) => {
   if (path.charAt(0) === '/') {
@@ -22,18 +23,22 @@ export default class TencentCOS extends CloudObjectStorage {
   }
 
   putObject(param: PutObjectParam): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const controller = new AbortController()
       const reader = new FileReader()
+      const url = readFileUrl(param.file)
       reader.readAsArrayBuffer(param.file)
+      const remoteUrl = appendUrl(param.bucket, param.path)
       reader.onload = () => {
         // do upload
         const mission: Mission = {
+          absolutePath: url,
           name: param.file.name,
           abortControl: controller,
-          filename: param.uploadFilename
+          filename: param.uploadFilename,
+          remoteUrl
         }
-        axios.put(appendUrl(param.bucket, param.path), reader.result, {
+        axios.put(remoteUrl, reader.result, {
           headers: {
             'Content-Type': param.file.type,
             'Authorization': param.signature
@@ -44,6 +49,7 @@ export default class TencentCOS extends CloudObjectStorage {
           signal: controller.signal
         }).then(r => {
           mission.onUploadDone?.(true, r.data)
+          this.notifyMissionDone(mission, true)
         }).catch(e => {
           let data
           if (e.response && e.response.data) {
@@ -52,9 +58,8 @@ export default class TencentCOS extends CloudObjectStorage {
             data = e.message
           }
           mission.onUploadDone?.(false, data)
+          this.notifyMissionDone(mission, false)
           resolve(e)
-        }).finally(() => {
-          this.notifyMissionDone()
         })
         this.pushMission(mission)
       }

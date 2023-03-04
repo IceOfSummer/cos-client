@@ -57,6 +57,9 @@
           <v-card-text>
             <span>将上传到<span class="text-light-blue">{{uploadFilePath}}</span>，确认吗?</span>
           </v-card-text>
+          <v-card-text v-if="!!uploadedRemoteUrl">
+            <span>该文件可能已经上传到<a :href="uploadedRemoteUrl" class="link">{{uploadedRemoteUrl}}</a>(可能需要修改为CDN域名)了，确认上传吗?</span>
+          </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
@@ -82,14 +85,21 @@
 
 <script lang="ts" setup>
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import CosAddDialog from '../../../components/CosAddDialog.vue'
 import { storeToRefs } from 'pinia'
 import useTokenStore from '../../../store/tokenStore'
 import { showToast, showToastFromBottom } from '../../../utils/Toast'
 import CosFactory from '../../../api/cos'
 import { v4 as uuidv4 } from 'uuid'
+import UploadDB from '../../../database/UploadDB'
+import Database from '../../../database'
+import { readFileUrl } from '../../../utils/FileUtils'
 
+onMounted(() => {
+  // 初始化
+  Database.INSTANCE
+})
 
 const tokenStore = useTokenStore()
 const deleteDialogVisible = ref(false)
@@ -128,6 +138,9 @@ const confirmDelete = () => {
 
 // 保存签名备份，以防上传失败
 let randomFilename = ''
+// 若当前文件已经上传，则在这里保存url
+const uploadedRemoteUrl = ref<string | undefined>()
+
 const onSubmit = () => {
   const file = selectedFile.value[0]
   if (!file) {
@@ -146,7 +159,16 @@ const onSubmit = () => {
     if (!pathPrefix.endsWith('/')) {
       pathPrefix = pathPrefix + '/'
     }
-    randomFilename = `${now.getFullYear()}-${now.getMonth()}-${now.getDay()}-${uuidv4() + selectedFile.value.name.substring(fileExtensionIndex)}`
+    randomFilename = `${now.getFullYear()}-${now.getMonth()}-${now.getDay()}-${uuidv4() + file.name.substring(fileExtensionIndex)}`
+
+    UploadDB.checkIsUploaded(readFileUrl(file)).then(r => {
+      uploadedRemoteUrl.value = r
+      console.log(r)
+    }).catch(e => {
+      uploadedRemoteUrl.value = undefined
+      console.error(e)
+    })
+
     uploadFilePath.value = pathPrefix + randomFilename
     uploadConfirmDialogVisible.value = true
   } else {
@@ -154,16 +176,20 @@ const onSubmit = () => {
   }
 }
 
+
+
 const confirmUpload = () => {
   const token = tokens.value.find(value => value.bucketAlias === selectPick.value)
   if (!token) {
     showToast('上传失败, 疑似您的存储桶设置有误', 'error')
     return
   }
+  const file = selectedFile.value[0]
+  UploadDB.checkIsUploaded(file.name)
   const { cos, signer } = CosFactory(token.cosProvider)
   const sign = signer.signPutRequest(uploadFilePath.value, { secretId: token.secretId, secretKey: token.secretKey })
   cos.putObject({
-    file: selectedFile.value[0],
+    file,
     signature: sign,
     bucket: token.bucket,
     path: uploadFilePath.value,

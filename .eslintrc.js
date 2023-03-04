@@ -27,7 +27,8 @@ module.exports = {
     'react-native/no-inline-styles': 'off',
     'react-hooks/exhaustive-deps': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    'vue/no-mutating-props': 'warn'
+    'vue/no-mutating-props': 'warn',
+    'no-async-promise-executor': 'off'
   }
 
 }
