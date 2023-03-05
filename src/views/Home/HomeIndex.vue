@@ -14,14 +14,14 @@
           <div class="right-tab" >
             <v-btn @click="uploadDrawerVisible = true" variant="text">
               {{$t('home.uploadList')}}
-              <span v-if="totalMissionCount > 0">({{$t('home.missionUploadProgress', [finishedCount, totalMissionCount])}})</span>
+              <span v-if="totalCount > 0">({{$t('home.missionUploadProgress', [finishedCount, totalCount])}})</span>
             </v-btn>
           </div>
         </div>
     </v-tabs>
   </v-card>
   <v-layout>
-    <v-navigation-drawer v-model="uploadDrawerVisible" temporary location="right" style="width: 34%">
+    <v-navigation-drawer v-model="uploadDrawerVisible" temporary location="right" style="width: 42%">
       <upload-mission-control/>
     </v-navigation-drawer>
   </v-layout>
@@ -31,19 +31,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import UploadMissionControl from './component/UploadMissionControl.vue'
-import pubsub from 'pubsub-js'
-import { CloudObjectStorage } from '../../api/cos/types'
+import useMissionStore from '../../store/missionStore'
+import { storeToRefs } from 'pinia'
 
 const tab = ref()
 const uploadDrawerVisible = ref(false)
-const totalMissionCount = ref(0)
-const finishedCount = ref(0)
-pubsub.subscribe(CloudObjectStorage.PUBSUB_MISSION_ADD, () => {
-  totalMissionCount.value++
-})
-PubSub.subscribe(CloudObjectStorage.PUBSUB_MISSION_DONE, () => {
-  finishedCount.value++
-})
+const missionStore = useMissionStore()
+const { totalCount, finishedCount } = storeToRefs(missionStore)
 
 </script>
 

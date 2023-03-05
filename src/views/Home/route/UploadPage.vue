@@ -94,6 +94,7 @@ import CosFactory from '../../../api/cos'
 import { v4 as uuidv4 } from 'uuid'
 import UploadDB from '../../../database/UploadDB'
 import { readFileUrl } from '../../../utils/FileUtils'
+import useMissionStore from '../../../store/missionStore'
 
 const tokenStore = useTokenStore()
 const deleteDialogVisible = ref(false)
@@ -105,7 +106,7 @@ const uploadPath = ref('')
 const uploadConfirmDialogVisible = ref(false)
 const uploadFilePath = ref('')
 const selectedFile = ref<File[]>([])
-
+const missionStore = useMissionStore()
 
 const onSubmitButtonPress = () => {
   addCosDialogVisible.value = true
@@ -182,13 +183,13 @@ const confirmUpload = () => {
   UploadDB.checkIsUploaded(file.name)
   const { cos, signer } = CosFactory(token.cosProvider)
   const sign = signer.signPutRequest(uploadFilePath.value, { secretId: token.secretId, secretKey: token.secretKey })
-  cos.putObject({
+  missionStore.addMission(cos.putObject({
     file,
     signature: sign,
     bucket: token.bucket,
     path: uploadFilePath.value,
     uploadFilename: randomFilename
-  })
+  }))
   selectedFile.value = []
   uploadConfirmDialogVisible.value = false
   showToastFromBottom('添加上传任务成功')

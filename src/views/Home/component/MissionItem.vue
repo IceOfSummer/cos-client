@@ -11,21 +11,22 @@
               <span>{{progress.current.toFixed(2)}}KB/</span>
               <span>{{progress.total.toFixed(2)}}KB</span>
             </div>
-            <v-btn v-if="!progress.finish" color="error" variant="text" @click="onCancel">{{$t('cancel')}}</v-btn>
+            <v-btn v-if="missionState === MissionState.RUNNING" color="error" variant="text" @click="onCancel">{{$t('cancel')}}</v-btn>
+            <v-btn v-else-if="missionState === MissionState.FAILED" color="error" variant="text" @click="onRetry">{{$t('retry')}}</v-btn>
           </div>
         </div>
         <v-progress-linear color="primary" :model-value="(progress.current / progress.total) * 100"/>
-        <div v-if="!!progress.finish">
-          <div v-if="progress.finish.success">
-            <span class="text-blue">上传成功, 文件名称: </span>
+        <div v-if="missionState >= STATE_DONE_FLAG">
+          <div v-if="missionState === MissionState.SUCCESS">
+            <span class="text-blue">上传成功, 上传路径: </span>
             <div>
-              <span class="text-sm-caption">{{mission.filename}}</span>
+              <span class="text-sm-caption">{{props.mission.remoteUrl}}</span>
             </div>
           </div>
           <div v-else>
             <span class="text-red">上传失败: </span>
             <div>
-              <span class="text-sm-caption">{{progress.finish.message}}</span>
+              <span class="text-sm-caption">{{failMessage}}</span>
             </div>
           </div>
         </div>
@@ -36,7 +37,8 @@
 
 <script setup lang="ts">
 import { Mission } from '../../../api/cos/types'
-import { reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
+import useMissionStore from '../../../store/missionStore'
 
 type Props = {
   mission: Mission
@@ -45,33 +47,57 @@ type Props = {
 type Progress = {
   current: number
   total: number
-  finish?: {
-    success: boolean
-    message?: string
-  }
 }
+
+enum MissionState {
+  NOT_STARTED = 0,
+  RUNNING,
+  SUCCESS,
+  FAILED,
+}
+// 若state大于该值，说明任务完成了(不管是否成功)
+const STATE_DONE_FLAG = 2
 const props = defineProps<Props>()
+const missionStore = useMissionStore()
+const missionState = ref<MissionState>(MissionState.NOT_STARTED)
+const failMessage = ref<string>('')
 
 const progress = reactive<Progress>({
   current: 0,
   total: 0,
 })
 
-props.mission.onProgress = (current, total) => {
-  progress.current = current / 1024
-  progress.total = total / 1024
+const executeMission = () => {
+  if (missionState.value === MissionState.RUNNING) {
+    return
+  }
+  missionState.value = MissionState.RUNNING
+  props.mission.execute((current, total) => {
+    progress.current = current / 1024
+    progress.total = total / 1024
+  }).then(() => {
+    missionState.value = MissionState.SUCCESS
+  }).catch(e => {
+    missionState.value = MissionState.FAILED
+    failMessage.value = e.message
+  }).finally(() => {
+    missionStore.incrFinishedCount()
+  })
 }
 
-props.mission.onUploadDone = (success, response) => {
-  progress.current = progress.total
-  progress.finish = {
-    success: success,
-    message: response
-  }
-}
+onMounted(() => {
+  executeMission()
+})
 
 const onCancel = () => {
-  props.mission.abortControl.abort()
+  props.mission.cancel()
+}
+
+const onRetry = () => {
+  if (missionState.value === MissionState.FAILED) {
+    missionStore.decFinishedCount()
+    executeMission()
+  }
 }
 
 </script>

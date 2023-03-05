@@ -6,19 +6,12 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
-import { CloudObjectStorage, Mission } from '../../../api/cos/types'
 import MissionItem from './MissionItem.vue'
+import { storeToRefs } from 'pinia'
+import useMissionStore from '../../../store/missionStore'
 
-const missions = ref<Array<Mission>>([])
-const listener = PubSub.subscribe(CloudObjectStorage.PUBSUB_MISSION_ADD, (key, arg) => {
-  const mission = arg as Mission
-  missions.value = [mission, ...missions.value]
-})
-
-onUnmounted(() => {
-  PubSub.unsubscribe(listener)
-})
+const missionStore = useMissionStore()
+const { missions } = storeToRefs(missionStore)
 
 
 </script>

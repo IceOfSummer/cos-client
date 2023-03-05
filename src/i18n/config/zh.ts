@@ -12,6 +12,7 @@ const zh = {
   uploadFile: '上传文件',
   uploadHistory: '上传历史',
   cancel: '取消',
+  retry: '重试',
   home: {
     uploadList: '上传列表',
     uploadMission: '上传任务',

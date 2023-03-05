@@ -1,6 +1,6 @@
 import { CloudObjectStorage, Mission, PutObjectParam } from '../../types'
 import axios from 'axios'
-import { readFileUrl } from '../../../../utils/FileUtils'
+import { readFileAsBuffer, readFileUrl } from '../../../../utils/FileUtils'
 
 const appendUrl = (host: string, path: string) => {
   if (path.charAt(0) === '/') {
@@ -22,52 +22,46 @@ export default class TencentCOS extends CloudObjectStorage {
     return this._INSTANCE = new TencentCOS()
   }
 
-  putObject(param: PutObjectParam): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      const controller = new AbortController()
-      const reader = new FileReader()
-      const url = readFileUrl(param.file)
-      reader.readAsArrayBuffer(param.file)
-      const remoteUrl = appendUrl(param.bucket, param.path)
-      reader.onload = () => {
-        // do upload
-        const mission: Mission = {
-          absolutePath: url,
-          name: param.file.name,
-          abortControl: controller,
-          filename: param.uploadFilename,
-          remoteUrl
-        }
-        axios.put(remoteUrl, reader.result, {
+  putObject(param: PutObjectParam): Mission {
+    const url = readFileUrl(param.file)
+    const remoteUrl = appendUrl(param.bucket, param.path)
+    const controller = new AbortController()
+    const mission: Mission = {
+      absolutePath: url,
+      name: param.file.name,
+      remoteUrl,
+      filename: param.uploadFilename,
+      execute: (cb) => new Promise( async (resolve, reject) => {
+        const data = await readFileAsBuffer(param.file)
+        axios.put(remoteUrl, data, {
           headers: {
             'Content-Type': param.file.type,
             'Authorization': param.signature
           },
           onUploadProgress: (evt) => {
-            mission.onProgress?.(evt.progress ?? 0, evt.total ?? param.file.size)
+            cb?.(evt.loaded ?? 0, evt.total ?? param.file.size)
           },
           signal: controller.signal
         }).then(r => {
-          mission.onUploadDone?.(true, r.data)
-          this.notifyMissionDone(mission, true)
+          resolve(r.data)
         }).catch(e => {
-          let data
+          let error
           if (e.response && e.response.data) {
-            data = e.response.data
+            error = new Error(e.response.data)
           } else {
-            data = e.message
+            error = e
           }
-          mission.onUploadDone?.(false, data)
-          this.notifyMissionDone(mission, false)
-          resolve(e)
+          reject(error)
         })
-        this.pushMission(mission)
+      }),
+      retry: (cb) => {
+        return mission.execute(cb)
+      },
+      cancel: () => {
+        controller.abort()
       }
-      reader.onerror = (e) => {
-        console.error(e)
-        reject(new Error('文件读取失败'))
-      }
-    })
+    }
+    return mission
   }
 
 }

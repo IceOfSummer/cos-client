@@ -10,7 +10,7 @@ import Database from '../../../database'
 
 const uploadHistory = ref<UploadDBSchema[]>([])
 const curPage = ref(1)
-const pageSize = ref(1)
+const pageSize = ref(5)
 const totalSize = ref(0)
 const options = ref({})
 const tableHeaders = [{ title: '本地路径', key: 'path' }, { title: '远程路径', key: 'remoteUrl' }]
