@@ -1,4 +1,5 @@
 {
   "productName": "对象存储工具",
-  "files": ["./main.js", "./dist"]
+  "files": ["./main.js", "./dist"],
+  "afterPack": "./build/hooks/afterPack.js"
 }
