@@ -18,15 +18,15 @@
         <v-progress-linear color="primary" :model-value="(progress.current / progress.total) * 100"/>
         <div v-if="missionState >= STATE_DONE_FLAG">
           <div v-if="missionState === MissionState.SUCCESS">
-            <span class="text-blue">上传成功, 上传路径: </span>
+            <span class="text-blue">操作成功</span>
             <div>
-              <span class="text-sm-caption">{{props.mission.remoteUrl}}</span>
+              <span class="text-sm-caption" v-html="missionMessage"></span>
             </div>
           </div>
           <div v-else>
-            <span class="text-red">上传失败: </span>
+            <span class="text-red">操作失败</span>
             <div>
-              <span class="text-sm-caption">{{failMessage}}</span>
+              <span class="text-sm-caption" v-html="missionMessage"></span>
             </div>
           </div>
         </div>
@@ -36,9 +36,10 @@
 </template>
 
 <script setup lang="ts">
-import { Mission } from '../../../api/cos/types'
+import { Mission, MissionType } from '../../../api/cos/types'
 import { onMounted, reactive, ref } from 'vue'
 import useMissionStore from '../../../store/missionStore'
+import UploadDB from '../../../database/UploadDB'
 
 type Props = {
   mission: Mission
@@ -60,7 +61,7 @@ const STATE_DONE_FLAG = 2
 const props = defineProps<Props>()
 const missionStore = useMissionStore()
 const missionState = ref<MissionState>(MissionState.NOT_STARTED)
-const failMessage = ref<string>('')
+const missionMessage = ref<string>('')
 
 const progress = reactive<Progress>({
   current: 0,
@@ -75,11 +76,16 @@ const executeMission = () => {
   props.mission.execute((current, total) => {
     progress.current = current / 1024
     progress.total = total / 1024
-  }).then(() => {
+  }).then((r) => {
+    missionMessage.value = r.message
     missionState.value = MissionState.SUCCESS
+    if (props.mission.type === MissionType.PUT_OBJECT) {
+      const remoteUrl = r.extra as unknown as string
+      UploadDB.saveUploadRecord(props.mission.absolutePath, remoteUrl)
+    }
   }).catch(e => {
     missionState.value = MissionState.FAILED
-    failMessage.value = e.message
+    missionMessage.value = e.message
   }).finally(() => {
     missionStore.incrFinishedCount()
   })

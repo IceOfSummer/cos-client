@@ -25,6 +25,7 @@
               <v-text-field label="SecretId" v-model="formValue.secretId" :error-messages="form.secretId.$errors.map(errorsToStringArray)"/>
               <v-text-field label="SecretKey" v-model="formValue.secretKey" :error-messages="form.secretKey.$errors.map(errorsToStringArray)"/>
               <v-text-field label="存储桶别称(可选)"  v-model="formValue.cosAlias"/>
+              <v-text-field label="CDN访问链接(格式为https://xxx.xxx, 可选)"  v-model="formValue.cdnUrl"/>
             </div>
           </v-lazy>
         </v-card-text>
@@ -90,7 +91,8 @@ type FromValue = {
   accessUrl?: string,
   secretKey?: string,
   secretId?: string,
-  cosProvider?: CosProvider
+  cosProvider?: CosProvider,
+  cdnUrl?: string
 }
 
 const formValue = reactive<FromValue>({
@@ -99,7 +101,8 @@ const formValue = reactive<FromValue>({
   accessUrl: '',
   secretKey: '',
   secretId: '',
-  cosProvider: undefined
+  cosProvider: undefined,
+  cdnUrl: undefined
 })
 
 const form = useVuelidate<FromValue, ValidationArgs<FromValue>>({
@@ -128,7 +131,8 @@ const onSubmit = async () => {
       secretId: _formValue.secretId,
       bucketAlias: _formValue.cosAlias || _formValue.cosName,
       bucket: _formValue.accessUrl,
-      cosProvider: _formValue.cosProvider
+      cosProvider: _formValue.cosProvider,
+      cdnUrl: _formValue.cdnUrl
     })
     visible.value = false
     showToast('添加成功')

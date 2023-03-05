@@ -20,3 +20,13 @@ body {
 ::-webkit-scrollbar{display: none;}
 html{font-size:62.5%;}
 
+.link-text {
+  text-decoration: none;
+  transition: all 0.3s;
+  color: skyblue;
+}
+.link-text:hover{
+  color: deepskyblue;
+  text-decoration: underline;
+}
+

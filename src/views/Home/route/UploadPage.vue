@@ -58,7 +58,7 @@
             <span>将上传到<span class="text-light-blue">{{uploadFilePath}}</span>，确认吗?</span>
           </v-card-text>
           <v-card-text v-if="!!uploadedRemoteUrl">
-            <span>该文件可能已经上传到<a :href="uploadedRemoteUrl" class="link">{{uploadedRemoteUrl}}</a>(可能需要修改为CDN域名)了，确认上传吗?</span>
+            <span>该文件可能已经上传到<a :href="uploadedRemoteUrl" class="link-text">{{uploadedRemoteUrl}}</a>了，确认上传吗?</span>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>

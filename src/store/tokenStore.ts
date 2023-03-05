@@ -13,6 +13,10 @@ export interface Token {
    * 末尾不要带'/'
    */
   bucket: string
+  /**
+   * cdn访问域名
+   */
+  cdnUrl?: string
 }
 
 export type TokenStore = {

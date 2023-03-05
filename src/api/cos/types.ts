@@ -3,6 +3,11 @@ export type CosProvider = 'tencent'
 
 export type PutObjectParam = {
   signature: string
+  /**
+   * 上传到桶哪个位置
+   *
+   * 如'/image/hello.png'
+   */
   path: string
   file: File
   /**
@@ -11,11 +16,29 @@ export type PutObjectParam = {
   bucket: string
   // 上传后的文件名称
   uploadFilename: string
+  /**
+   * cdn访问地址
+   */
+  cdnUrl?: string
 }
 
 type OnProgress = (current: number, total: number) => void
+type MissionResponse<Extra = void> = {
+  /**
+   * 任务成功之后返回的内容. <b>内容可能是html富文本</b>
+   */
+  message: string
+  /**
+   * 额外内容
+   */
+  extra?: Extra
+}
 
-export interface Mission<R = string> {
+export enum MissionType {
+  PUT_OBJECT
+}
+
+export interface Mission<Extra = void> {
   /**
    * 上传后的文件名
    */
@@ -35,21 +58,21 @@ export interface Mission<R = string> {
   /**
    * 执行当前任务
    * @param onProgress 执行进度回调
+   * @return {Promise<string>} 任务成功之后返回的内容. <b>内容可能是html富文本</b>
    */
-  execute: (onProgress?: OnProgress) => Promise<R>
+  execute: (onProgress?: OnProgress) => Promise<MissionResponse<Extra>>
   /**
-   * 重试当前任务
-   * @param onProgress onProgress 执行进度回调
+   * @see Mission#execute
    */
-  retry: (onProgress: OnProgress) => Promise<R>
+  retry: (onProgress: OnProgress) => Promise<MissionResponse<Extra>>
+  /**
+   * 任务标识
+   */
+  type: MissionType
   /**
    * 取消当前任务
    */
   cancel: () => void
-  /**
-   * 任务标记
-   */
-  meta?: string
 }
 
 export abstract class CloudObjectStorage {
@@ -57,8 +80,9 @@ export abstract class CloudObjectStorage {
   /**
    * put object
    * @param param 请求参数
+   * @return {Mission} 额外内容将返回文件访问路径
    */
-  abstract putObject(param: PutObjectParam): Mission
+  abstract putObject(param: PutObjectParam): Mission<string>
 
 }
 

@@ -1,6 +1,7 @@
-import { CloudObjectStorage, Mission, PutObjectParam } from '../../types'
+import { CloudObjectStorage, Mission, MissionType, PutObjectParam } from '../../types'
 import axios from 'axios'
 import { readFileAsBuffer, readFileUrl } from '../../../../utils/FileUtils'
+import { replaceURLWithHTMLLinks } from '../../../../utils/StringUtils'
 
 const appendUrl = (host: string, path: string) => {
   if (path.charAt(0) === '/') {
@@ -22,14 +23,15 @@ export default class TencentCOS extends CloudObjectStorage {
     return this._INSTANCE = new TencentCOS()
   }
 
-  putObject(param: PutObjectParam): Mission {
+  putObject(param: PutObjectParam): Mission<string> {
     const url = readFileUrl(param.file)
     const remoteUrl = appendUrl(param.bucket, param.path)
     const controller = new AbortController()
-    const mission: Mission = {
+    const mission: Mission<string> = {
       absolutePath: url,
       name: param.file.name,
       remoteUrl,
+      type: MissionType.PUT_OBJECT,
       filename: param.uploadFilename,
       execute: (cb) => new Promise( async (resolve, reject) => {
         const data = await readFileAsBuffer(param.file)
@@ -42,8 +44,17 @@ export default class TencentCOS extends CloudObjectStorage {
             cb?.(evt.loaded ?? 0, evt.total ?? param.file.size)
           },
           signal: controller.signal
-        }).then(r => {
-          resolve(r.data)
+        }).then(() => {
+          let accessUrl: string
+          if (param.cdnUrl) {
+            accessUrl = appendUrl(param.cdnUrl, param.path)
+          } else {
+            accessUrl = remoteUrl
+          }
+          resolve({
+            message: replaceURLWithHTMLLinks('访问地址: ' + accessUrl),
+            extra: accessUrl
+          })
         }).catch(e => {
           let error
           if (e.response && e.response.data) {
