@@ -24,7 +24,6 @@
               <v-text-field label="存储桶访问域名" v-model="formValue.accessUrl" :error-messages="form.accessUrl.$errors.map(errorsToStringArray)"/>
               <v-text-field label="SecretId" v-model="formValue.secretId" :error-messages="form.secretId.$errors.map(errorsToStringArray)"/>
               <v-text-field label="SecretKey" v-model="formValue.secretKey" :error-messages="form.secretKey.$errors.map(errorsToStringArray)"/>
-              <v-text-field label="存储桶别称(可选)"  v-model="formValue.cosAlias"/>
               <v-text-field label="CDN访问链接(格式为https://xxx.xxx, 可选)"  v-model="formValue.cdnUrl"/>
             </div>
           </v-lazy>
@@ -52,28 +51,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, Ref } from 'vue'
+import { computed, reactive } from 'vue'
 import useTokenStore from '../store/tokenStore'
 import { showToast } from '../utils/Toast'
 import { CosProvider } from '../api/cos/types'
 import { useVuelidate, ValidationArgs } from '@vuelidate/core'
-import { required } from '../utils/validators'
+import { errorsToStringArray, required } from '../utils/validators'
 
 interface Props {
   modelValue: boolean
 }
-
-type ErrorLike = {
-  '$message': string | Ref<string>
-}
-
-const errorsToStringArray = ({ $message }: ErrorLike) => {
-  if (typeof $message === 'string') {
-    return $message
-  }
-  return $message.value
-}
-
 const props = defineProps<Props>()
 const emit = defineEmits(['update:modelValue'])
 
@@ -87,7 +74,6 @@ const cosProviderList: Array<CosProviderItem> = [{ name: 'tencent', alias: '腾�
 
 type FromValue = {
   cosName?: string,
-  cosAlias?: string,
   accessUrl?: string,
   secretKey?: string,
   secretId?: string,
@@ -97,7 +83,6 @@ type FromValue = {
 
 const formValue = reactive<FromValue>({
   cosName: '',
-  cosAlias: '',
   accessUrl: '',
   secretKey: '',
   secretId: '',
@@ -129,7 +114,7 @@ const onSubmit = async () => {
     tokenStore.appendToken({
       secretKey: _formValue.secretKey,
       secretId: _formValue.secretId,
-      bucketAlias: _formValue.cosAlias || _formValue.cosName,
+      bucketAlias: _formValue.cosName,
       bucket: _formValue.accessUrl,
       cosProvider: _formValue.cosProvider,
       cdnUrl: _formValue.cdnUrl
