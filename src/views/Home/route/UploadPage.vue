@@ -188,7 +188,8 @@ const confirmUpload = () => {
     signature: sign,
     bucket: token.bucket,
     path: uploadFilePath.value,
-    uploadFilename: randomFilename
+    uploadFilename: randomFilename,
+    cdnUrl: token.cdnUrl
   }))
   selectedFile.value = []
   uploadConfirmDialogVisible.value = false
