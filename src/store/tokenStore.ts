@@ -6,6 +6,9 @@ export interface Token {
   cosProvider: CosProvider
   secretId: string
   secretKey: string
+  /**
+   * 存储桶名称
+   */
   bucketAlias: string
   /**
    * 存储桶地址，如:https://xxxx.xxx
@@ -50,6 +53,18 @@ const useTokenStore = defineStore('token', {
     },
     removeToken(bucketAlias: string) {
       this.tokens = deleteElement(this.tokens, searchFn(bucketAlias))
+    },
+    findByTitle(cosName: string) {
+      return this.tokens.find(searchFn(cosName))
+    },
+    modifyToken(buckAlias: string, replace: Token): boolean {
+      const tok = this.tokens.find(searchFn(buckAlias))
+      if (tok) {
+        Object.assign(tok, replace)
+        return true
+      } else {
+        return false
+      }
     }
   }
 })

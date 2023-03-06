@@ -1,6 +1,6 @@
 {
   "name": "cos-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "author": "IceOfSummer",
   "description": "对象存储上传工具",

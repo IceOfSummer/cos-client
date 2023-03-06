@@ -13,6 +13,7 @@
           <v-btn size="large" color="primary" variant="text" block v-bind="props.props" :active="props.item.title === selectPick" class="select-button">
             <div style="align-self: flex-start">{{props.item.title}}</div>
             <template v-slot:append>
+              <v-btn @click.prevent="onCosModify(props.item.title)" variant="text" color="warn">修改</v-btn>
               <v-btn @click.prevent="onCosDelete(props.item.title)" variant="text" color="error">删除</v-btn>
             </template>
           </v-btn>
@@ -80,6 +81,7 @@
       </v-dialog>
     </div>
     <cos-add-dialog v-model="addCosDialogVisible"/>
+    <cos-modify-dialog v-model="modifyDialogVisible" :cos-name="currentSelectCosTitle"/>
   </div>
 </template>
 
@@ -95,9 +97,11 @@ import { v4 as uuidv4 } from 'uuid'
 import UploadDB from '../../../database/UploadDB'
 import { readFileUrl } from '../../../utils/FileUtils'
 import useMissionStore from '../../../store/missionStore'
+import CosModifyDialog from '../../../components/CosModifyDialog.vue'
 
 const tokenStore = useTokenStore()
 const deleteDialogVisible = ref(false)
+const modifyDialogVisible = ref(false)
 const currentSelectCosTitle = ref<string | undefined>()
 const { tokens } = storeToRefs(tokenStore)
 const addCosDialogVisible = ref(false)
@@ -115,6 +119,11 @@ const onSubmitButtonPress = () => {
 const onCosDelete = (title: string) => {
   currentSelectCosTitle.value = title
   deleteDialogVisible.value = true
+}
+
+const onCosModify = (title: string) => {
+  currentSelectCosTitle.value = title
+  modifyDialogVisible.value = true
 }
 
 const confirmDelete = () => {
